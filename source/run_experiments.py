@@ -511,7 +511,7 @@ def experiment(FLAGS, perfmeasure, deepmethod, foldcount=1): #5-fold cross valid
     FLAGS.drug_count = drugcount
     FLAGS.target_count = targetcount
 
-    label_row_inds, label_col_inds = np.where(Y >= 0.5)  #basically finds the point address of affinity [x,y]
+    label_row_inds, label_col_inds = np.where(np.isnan(Y)==False)   #basically finds the point address of affinity [x,y]
 
     if not os.path.exists(figdir):
         os.makedirs(figdir)
