@@ -133,11 +133,13 @@ def build_combined_categorical(FLAGS, NUM_FILTERS, FILTER_LENGTH1, FILTER_LENGTH
 
 
     # And add a logistic regression on top
-    predictions = Dense(1, kernel_initializer='normal')(FC2) #OR no activation, rght now it's between 0-1, do I want this??? activation='sigmoid'
+    predictions = Dense(1, kernel_initializer='normal', activation='sigmoid')(FC2) #OR no activation, rght now it's between 0-1, do I want this??? activation='sigmoid'
 
     interactionModel = Model(inputs=[XDinput, XTinput], outputs=[predictions])
 
-    interactionModel.compile(optimizer='adam', loss='mean_squared_error', metrics=[cindex_score]) #, metrics=['cindex_score']
+    interactionModel.compile(optimizer='adam', 
+                             loss=keras.losses.BinaryCrossentropy(from_logits=True), 
+                             metrics=[keras.metrics.AUC(from_logits=True)]) #, metrics=['cindex_score']
     print(interactionModel.summary())
     plot_model(interactionModel, to_file='figures/build_combined_categorical.png')
 
@@ -475,7 +477,7 @@ def prepare_interaction_pairs(XD, XT,  Y, rows, cols):
 
 
        
-def experiment(FLAGS, perfmeasure, deepmethod, foldcount=6): #5-fold cross validation + test
+def experiment(FLAGS, perfmeasure, deepmethod, foldcount=1): #5-fold cross validation + test
 
     #Input
     #XD: [drugs, features] sized array (features may also be similarities with other drugs
@@ -509,7 +511,7 @@ def experiment(FLAGS, perfmeasure, deepmethod, foldcount=6): #5-fold cross valid
     FLAGS.drug_count = drugcount
     FLAGS.target_count = targetcount
 
-    label_row_inds, label_col_inds = np.where(np.isnan(Y)==False)  #basically finds the point address of affinity [x,y]
+    label_row_inds, label_col_inds = np.where(Y >= 0.5)  #basically finds the point address of affinity [x,y]
 
     if not os.path.exists(figdir):
         os.makedirs(figdir)
