@@ -367,7 +367,7 @@ def general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, prfmeasure, run
 
                     gridmodel = runmethod(FLAGS, param1value, param2value, param3value)
                     if FLAGS.ckpt != '':
-                        gridmodel.load_weights(FLAGS.ckpt + "_{P1:%d}_{P2:%d}_{P3:%d}.ckpt".format(P1=param1value, P2=param2value, P3=param3value))
+                        gridmodel.load_weights(FLAGS.ckpt + "_{P1:d}_{P2:d}_{P3:d}.ckpt".format(P1=param1value, P2=param2value, P3=param3value))
                     es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=15)
                     gridres = gridmodel.fit(([np.array(train_drugs),np.array(train_prots) ]), np.array(train_Y), batch_size=batchsz, epochs=epoch, 
                             validation_data=( ([np.array(val_drugs), np.array(val_prots) ]), np.array(val_Y)),  shuffle=False, callbacks=[es] ) 
