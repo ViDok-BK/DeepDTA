@@ -541,7 +541,7 @@ def run_regression( FLAGS ):
     perfmeasure = get_auc
     deepmethod = build_combined_categorical
     if FLAGS.ckpt != '':
-        deepmethod.load_weight(FLAGS.ckpt)
+        deepmethod.load_weights(FLAGS.ckpt)
     experiment(FLAGS, perfmeasure, deepmethod)
 
 
