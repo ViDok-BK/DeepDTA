@@ -367,6 +367,8 @@ def general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, prfmeasure, run
                     param3value = paramset3[param3ind]
 
                     gridmodel = runmethod(FLAGS, param1value, param2value, param3value)
+                    if FLAGS.ckpt != '':
+                        gridmodel.load_weights(FLAGS.ckpt)
                     es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=15)
                     gridres = gridmodel.fit(([np.array(train_drugs),np.array(train_prots) ]), np.array(train_Y), batch_size=batchsz, epochs=epoch, 
                             validation_data=( ([np.array(val_drugs), np.array(val_prots) ]), np.array(val_Y)),  shuffle=False, callbacks=[es] ) 
@@ -540,8 +542,6 @@ def run_regression( FLAGS ):
 
     perfmeasure = get_auc
     deepmethod = build_combined_categorical
-    if FLAGS.ckpt != '':
-        deepmethod.load_weights(FLAGS.ckpt)
     experiment(FLAGS, perfmeasure, deepmethod)
 
 
