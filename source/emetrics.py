@@ -1,5 +1,10 @@
 import numpy as np
+from sklearn.metrics import roc_auc_score
 
+def get_auc(y_obs,y_pred):
+    y_obs = np.array(y_obs)
+    y_pred = np.array(y_pred)
+    return [roc_auc_score(y_obs, y_pred)]
 
 def get_aupr(Y, P):
     if hasattr(Y, 'A'): Y = Y.A

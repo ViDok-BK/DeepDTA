@@ -4,7 +4,7 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 import random as rn
-
+import random
 ### We modified Pahikkala et al. (2014) source code for cross-val process ###
 
 import os
@@ -51,7 +51,7 @@ import matplotlib.mlab as mlab
 from random import shuffle
 from copy import deepcopy
 from sklearn import preprocessing
-from emetrics import get_aupr, get_cindex, get_rm2
+from emetrics import get_aupr, get_cindex, get_rm2, get_auc
 
 
 
@@ -138,8 +138,8 @@ def build_combined_categorical(FLAGS, NUM_FILTERS, FILTER_LENGTH1, FILTER_LENGTH
     interactionModel = Model(inputs=[XDinput, XTinput], outputs=[predictions])
 
     interactionModel.compile(optimizer='adam', 
-                             loss=keras.losses.BinaryCrossentropy(from_logits=True), 
-                             metrics=[keras.metrics.AUC(from_logits=True)]) #, metrics=['cindex_score']
+                             loss=keras.losses.BinaryCrossentropy(), 
+                             metrics=[keras.metrics.AUC()]) #, metrics=['cindex_score']
     print(interactionModel.summary())
     plot_model(interactionModel, to_file='figures/build_combined_categorical.png')
 
@@ -254,18 +254,20 @@ def nfold_1_2_3_setting_sample(XD, XT,  Y, label_row_inds, label_col_inds, measu
     train_sets = []
 
     #logger.info('Start training')
-    for val_foldind in range(foldinds):
-        val_fold = outer_train_sets[val_foldind]
-        val_sets.append(val_fold)
-        otherfolds = deepcopy(outer_train_sets)
-        otherfolds.pop(val_foldind)
-        otherfoldsinds = [item for sublist in otherfolds for item in sublist]
-        train_sets.append(otherfoldsinds)
-        test_sets.append(test_set)
-        print("val set", str(len(val_fold)))
-        print("train set", str(len(otherfoldsinds)))
+    # for val_foldind in range(foldinds):
+    #     val_fold = outer_train_sets[val_foldind]
+    #     val_sets.append(val_fold)
+    #     otherfolds = deepcopy(outer_train_sets)
+    #     otherfolds.pop(val_foldind)
+    #     otherfoldsinds = [item for sublist in otherfolds for item in sublist]
+    #     train_sets.append(otherfoldsinds)
+    #     test_sets.append(test_set)
+    #     print("val set", str(len(val_fold)))
+    #     print("train set", str(len(otherfoldsinds)))
 
-
+    test_sets.append(test_set)
+    train_sets.append(outer_train_sets[0])
+    val_sets.append(random.choices(outer_train_sets[0], k=int(len(outer_train_sets[0])/10)))
 
     bestparamind, best_param_list, bestperf, all_predictions_not_need, losses_not_need = general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, 
                                                                                                 measure, runmethod, FLAGS, train_sets, val_sets)
@@ -300,7 +302,7 @@ def nfold_1_2_3_setting_sample(XD, XT,  Y, label_row_inds, label_col_inds, measu
 
     logging("Test Performance CI", FLAGS)
     logging(testperfs, FLAGS)
-    logging("Test Performance MSE", FLAGS)
+    logging("Test Performance BCE", FLAGS)
     logging(testloss, FLAGS)
 
     return avgperf, avgloss, teststd
@@ -372,10 +374,10 @@ def general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, prfmeasure, run
                     rperf = rperf[0]
 
 
-                    logging("P1 = %d,  P2 = %d, P3 = %d, Fold = %d, CI-i = %f, CI-ii = %f, MSE = %f" % 
+                    logging("P1 = %d,  P2 = %d, P3 = %d, Fold = %d, AUC-i = %f, AUC-ii = %f, BCE = %f" % 
                     (param1ind, param2ind, param3ind, foldind, rperf, rperf2, loss), FLAGS)
 
-                    plotLoss(gridres, param1ind, param2ind, param3ind, foldind)
+                    # plotLoss(gridres, param1ind, param2ind, param3ind, foldind)
 
                     all_predictions[pointer][foldind] =rperf #TODO FOR EACH VAL SET allpredictions[pointer][foldind]
                     all_losses[pointer][foldind]= loss
@@ -444,10 +446,10 @@ def plotLoss(history, batchind, epochind, param3ind, foldind):
     ## PLOT CINDEX
     plt.figure()
     plt.title('model concordance index')
-    plt.ylabel('cindex')
+    plt.ylabel('AUC')
     plt.xlabel('epoch')
-    plt.plot(history.history['cindex_score'])
-    plt.plot(history.history['val_cindex_score'])
+    plt.plot(history.history['auc_1'])
+    plt.plot(history.history['val_auc_1'])
     plt.legend(['traincindex', 'valcindex'], loc='upper left')
     plt.savefig("figures/"+figname + "_acc.png" , dpi=None, facecolor='w', edgecolor='w', orientation='portrait', 
                             papertype=None, format=None,transparent=False, bbox_inches=None, pad_inches=0.1,frameon=None)
@@ -460,7 +462,7 @@ def prepare_interaction_pairs(XD, XT,  Y, rows, cols):
     targets = []
     targetscls = []
     affinity=[] 
-        
+
     for pair_ind in range(len(rows)):
         drug = XD[rows[pair_ind]]
         drugs.append(drug)
@@ -529,7 +531,7 @@ def experiment(FLAGS, perfmeasure, deepmethod, foldcount=1): #5-fold cross valid
 
 def run_regression( FLAGS ): 
 
-    perfmeasure = get_cindex
+    perfmeasure = get_auc
     deepmethod = build_combined_categorical
 
     experiment(FLAGS, perfmeasure, deepmethod)
