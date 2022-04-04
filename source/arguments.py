@@ -104,7 +104,12 @@ def argparser():
       help='Directory for log data.'
   )
 
-
+  parser.add_argument(
+      '--ckpt',
+      type=str,
+      default='',
+      help='Checkpoint file'
+  )
 
   FLAGS, unparsed = parser.parse_known_args()
 

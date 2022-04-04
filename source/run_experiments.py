@@ -317,6 +317,7 @@ def general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, prfmeasure, run
     paramset3 = FLAGS.seq_window_lengths                               #[8, 12]#[64,  256] #[64, 192]#[8, 192, 384]
     epoch = FLAGS.num_epoch                                 #100
     batchsz = FLAGS.batch_size                             #256
+    ds_name = FLAGS.dataset_path.split("/")[1]
 
     logging("---Parameter Search-----", FLAGS)
 
@@ -326,6 +327,8 @@ def general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, prfmeasure, run
     all_predictions = [[0 for x in range(w)] for y in range(h)] 
     all_losses = [[0 for x in range(w)] for y in range(h)] 
     print(all_predictions)
+
+    checkpoint_path = "ckpt/" + ds_name + ".ckpt"
 
     for foldind in range(len(val_sets)):
         valinds = val_sets[foldind]
@@ -353,7 +356,8 @@ def general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, prfmeasure, run
 
 
         pointer = 0
-       
+        best_rperf = 0
+
         for param1ind in range(len(paramset1)): #hidden neurons
             param1value = paramset1[param1ind]
             for param2ind in range(len(paramset2)): #learning rate
@@ -373,6 +377,9 @@ def general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, prfmeasure, run
                     rperf = prfmeasure(val_Y, predicted_labels)
                     rperf = rperf[0]
 
+                    if rperf > best_rperf:
+                        best_rperf = rperf
+                        gridmodel.save_weights(checkpoint_path)
 
                     logging("P1 = %d,  P2 = %d, P3 = %d, Fold = %d, AUC-i = %f, AUC-ii = %f, BCE = %f" % 
                     (param1ind, param2ind, param3ind, foldind, rperf, rperf2, loss), FLAGS)
@@ -533,7 +540,8 @@ def run_regression( FLAGS ):
 
     perfmeasure = get_auc
     deepmethod = build_combined_categorical
-
+    if FLAGS.ckpt != '':
+        deepmethod.load_weight(FLAGS.ckpt)
     experiment(FLAGS, perfmeasure, deepmethod)
 
 
