@@ -328,7 +328,7 @@ def general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, prfmeasure, run
     all_losses = [[0 for x in range(w)] for y in range(h)] 
     print(all_predictions)
 
-    checkpoint_path = "ckpt/" + ds_name + ".ckpt"
+    checkpoint_path = "ckpt/" + ds_name + "_{P1:%d}_{P2:%d}_{P3:%d}.ckpt"
 
     for foldind in range(len(val_sets)):
         valinds = val_sets[foldind]
@@ -356,7 +356,6 @@ def general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, prfmeasure, run
 
 
         pointer = 0
-        best_rperf = 0
 
         for param1ind in range(len(paramset1)): #hidden neurons
             param1value = paramset1[param1ind]
@@ -368,7 +367,7 @@ def general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, prfmeasure, run
 
                     gridmodel = runmethod(FLAGS, param1value, param2value, param3value)
                     if FLAGS.ckpt != '':
-                        gridmodel.load_weights(FLAGS.ckpt)
+                        gridmodel.load_weights(FLAGS.ckpt + "_{P1:%d}_{P2:%d}_{P3:%d}.ckpt".format(P1=param1value, P2=param2value, P3=param3value))
                     es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=15)
                     gridres = gridmodel.fit(([np.array(train_drugs),np.array(train_prots) ]), np.array(train_Y), batch_size=batchsz, epochs=epoch, 
                             validation_data=( ([np.array(val_drugs), np.array(val_prots) ]), np.array(val_Y)),  shuffle=False, callbacks=[es] ) 
@@ -379,9 +378,7 @@ def general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, prfmeasure, run
                     rperf = prfmeasure(val_Y, predicted_labels)
                     rperf = rperf[0]
 
-                    if rperf > best_rperf:
-                        best_rperf = rperf
-                        gridmodel.save_weights(checkpoint_path)
+                    gridmodel.save_weights(checkpoint_path.format(P1=param1value, P2=param2value, P3=param3value))
 
                     logging("P1 = %d,  P2 = %d, P3 = %d, Fold = %d, AUC-i = %f, AUC-ii = %f, BCE = %f" % 
                     (param1ind, param2ind, param3ind, foldind, rperf, rperf2, loss), FLAGS)
