@@ -328,7 +328,7 @@ def general_nfold_cv(XD, XT,  Y, label_row_inds, label_col_inds, prfmeasure, run
     all_losses = [[0 for x in range(w)] for y in range(h)] 
     print(all_predictions)
 
-    checkpoint_path = "ckpt/" + ds_name + "_{P1:%d}_{P2:%d}_{P3:%d}.ckpt"
+    checkpoint_path = "ckpt/" + ds_name + "_{P1:d}_{P2:d}_{P3:d}.ckpt"
 
     for foldind in range(len(val_sets)):
         valinds = val_sets[foldind]
